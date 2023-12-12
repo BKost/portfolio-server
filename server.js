@@ -1,13 +1,20 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 
 // Middleware
-const routeNotFound = require("./middleware/not-found");
+const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 
-// Router
+// Routers
 const categoriesRouter = require("./routes/categories");
 const myListingsRouter = require("./routes/my-listings");
+const myProfileRouter = require("./routes/my-profile");
+
+const { logIn } = require("./controllers/login");
+const { register } = require("./controllers/register");
+const { logOut } = require("./controllers/logout");
 
 // Categories:
 // - getAllItems
@@ -34,15 +41,20 @@ const myListingsRouter = require("./routes/my-listings");
 
 app.use(express.json());
 
+app.post("/api/login", logIn);
+app.post("/api/register", register);
+app.post("/api/log-out", logOut);
+
 app.use("/api/categories", categoriesRouter);
 app.use("/api/my-listings", myListingsRouter);
+app.use("/api/my-profile", myProfileRouter);
 
 app.get("/", (req, res) => {
   res.send("Home");
 });
 
 // Route NOt Found
-app.use(routeNotFound);
+app.use(notFoundMiddleware);
 
 // Custom Error Handler
 app.use(errorHandlerMiddleware);
