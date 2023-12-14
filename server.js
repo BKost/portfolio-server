@@ -7,6 +7,7 @@ const app = express();
 const { connectToDatabase } = require("./db/connectDB");
 
 // Middleware
+const cookieParser = require("cookie-parser");
 const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 
@@ -43,10 +44,11 @@ const { logOut } = require("./controllers/logout");
 // - logOut
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/api/login", logIn);
 app.post("/api/register", register);
-app.post("/api/log-out", logOut);
+app.get("/api/log-out", logOut);
 
 app.use("/api/categories", categoriesRouter);
 app.use("/api/my-listings", myListingsRouter);

@@ -3,6 +3,8 @@ const collection = db.collection("users");
 
 const { CustomAPIError } = require("../errors/custom-error");
 
+const bcrypt = require("bcryptjs");
+
 const register = async (req, res) => {
   const registerUserData = req.body;
 
@@ -18,6 +20,9 @@ const register = async (req, res) => {
   } = registerUserData;
 
   try {
+    // const compare = await bcrypt.compare("password", hashed);
+    // console.log(compare);
+
     if (
       !user_name ||
       !first_name ||
@@ -37,14 +42,22 @@ const register = async (req, res) => {
 
     const user = await collection.findOne({ email });
 
+    // ADD If user name exists
+
     if (user) {
       throw new CustomAPIError(`User with email ${email} already exists`, 400);
     }
 
-    if (!user) {
-      await collection.insertOne(registerUserData);
-      return res.status(201).json({ msg: "User registered" });
-    }
+    // hash password
+    const saltRounds = 10;
+
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    console.log(hashedPassword);
+
+    registerUserData.password = hashedPassword;
+    // Store hash in your password DB.
+    await collection.insertOne(registerUserData);
+    res.status(201).json({ msg: "User registered" });
   } catch (error) {
     if (error instanceof CustomAPIError) {
       return res.status(error.statusCode).json({ msg: `${error.message}` });
