@@ -5,6 +5,4 @@ class CustomAPIError extends Error {
   }
 }
 
-const handleCatchError = (req, res) => {};
-
 module.exports = { CustomAPIError };
