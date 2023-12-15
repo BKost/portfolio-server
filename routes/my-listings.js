@@ -13,7 +13,7 @@ const {
 
 router.route("/").get(getAllListings).post(uploadListing);
 router
-  .route("/:id")
+  .route("/:listingId")
   .get(getSingleListing)
   .patch(updateListing)
   .delete(deleteListing);

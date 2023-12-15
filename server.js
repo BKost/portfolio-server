@@ -3,16 +3,17 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 
-// donnectDB
+// donnectDBr
 const { connectToDatabase } = require("./db/connectDB");
 
 // Middleware
 const cookieParser = require("cookie-parser");
 const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
+const authMiddleware = require("./middleware/auth-middleware");
 
 // Routers
-const categoriesRouter = require("./routes/categories");
+const categoriesRouter = require("./routes/items");
 const myListingsRouter = require("./routes/my-listings");
 const myProfileRouter = require("./routes/my-profile");
 
@@ -48,10 +49,10 @@ app.use(cookieParser());
 
 app.post("/api/login", logIn);
 app.post("/api/register", register);
-app.get("/api/log-out", logOut);
+app.get("/api/log-out", authMiddleware, logOut);
 
-app.use("/api/categories", categoriesRouter);
-app.use("/api/my-listings", myListingsRouter);
+app.use("/api/items", categoriesRouter);
+app.use("/api/my-listings", authMiddleware, myListingsRouter);
 app.use("/api/my-profile", myProfileRouter);
 
 app.get("/", (req, res) => {

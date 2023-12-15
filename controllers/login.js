@@ -30,26 +30,23 @@ const logIn = async (req, res) => {
       return res.json({ msg: `Provide correct password` });
     }
 
-    // console.log(password);
-    // console.log(hashedPassword);
-    // console.log(isPasswordCorrect);
-
     const { user_name, _id } = user;
 
     const authToken = jwt.sign({ user_name, _id }, process.env.JWT_SIGN, {
       expiresIn: "1d",
     });
 
-    const eightHours = 2880000;
+    const eightHours = 28800000;
 
     res.cookie("authToken", authToken, { maxAge: eightHours });
     res.cookie("user", { user_name, _id }, { maxAge: eightHours });
 
-    // const decoded = jwt.verify(authToken, process.env.JWT_SIGN);
-    // console.log(decoded);
-
-    res.json({ msg: "Auth sent", authToken });
-  } catch (error) {}
+    res.end();
+  } catch (error) {
+    res.status(500).json({
+      msg: `${err.message} - login` || "Something went wrong - login",
+    });
+  }
 };
 
 module.exports = { logIn };

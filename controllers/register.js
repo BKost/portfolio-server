@@ -48,6 +48,11 @@ const register = async (req, res) => {
       throw new CustomAPIError(`User with email ${email} already exists`, 400);
     }
 
+    const userName = await collection.findOne({ user_name });
+    if (userName) {
+      throw new CustomAPIError(`User name ${user_name} already taken`, 400);
+    }
+
     // hash password
     const saltRounds = 10;
 
