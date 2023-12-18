@@ -11,8 +11,6 @@ const db = dbClient.db("FULLSTACK-PROJECT");
 const connectToDatabase = async () => {
   try {
     await dbClient.connect();
-
-    console.log("Connected to database");
   } catch (error) {
     await dbClient.close();
     console.log(`Error connecting to database: ${error}`);

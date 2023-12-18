@@ -51,17 +51,15 @@ const updateListing = async (req, res) => {
   // console.log(data);
   // console.log(listingId);
 
-  // WILL NEED MORE WORK PROBABLY
+  // NEEDS MORE WORK !!!
 
   try {
-    const updateListing = await collection.updateOne(
+    await collection.updateOne(
       {
         _id: new ObjectId(listingId),
       },
       { $set: data }
     );
-
-    console.log(updateListing);
 
     res.status(200).json({ msg: `Listing updated` });
   } catch (error) {
@@ -70,7 +68,19 @@ const updateListing = async (req, res) => {
 };
 
 const deleteListing = async (req, res) => {
-  res.send("Delete listing");
+  const { listingId } = req.params;
+
+  try {
+    await collection.deleteOne({
+      _id: new ObjectId(listingId),
+    });
+
+    res.status(200).json({ msg: "Listing deleted" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: "Something went wrong - delete single listing" });
+  }
 };
 
 module.exports = {

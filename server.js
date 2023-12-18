@@ -53,7 +53,7 @@ app.get("/api/log-out", authMiddleware, logOut);
 
 app.use("/api/items", categoriesRouter);
 app.use("/api/my-listings", authMiddleware, myListingsRouter);
-app.use("/api/my-profile", myProfileRouter);
+app.use("/api/my-profile", authMiddleware, myProfileRouter);
 
 app.get("/", (req, res) => {
   res.send("Home");
