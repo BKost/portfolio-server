@@ -11,6 +11,7 @@ const updateProfile = async (req, res) => {
   console.log(data);
 
   // SPECIAL ATTENTION !!!
+
   try {
     // const updateUser = await users.updateOne(
     //   { _id: new ObjectId(id) },
@@ -30,6 +31,7 @@ const deleteProfile = async (req, res) => {
   try {
     const deleteUser = await users.deleteOne({ _id: new ObjectId(id) });
     const deleteUserItems = await items.deleteMany({ createdBy: id });
+
     // CLear cookies of deleted user
 
     console.log(deleteUser);

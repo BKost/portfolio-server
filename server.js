@@ -12,6 +12,8 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
+const cors = require("cors");
+
 // Routers
 const categoriesRouter = require("./routes/items");
 const myListingsRouter = require("./routes/my-listings");
@@ -43,7 +45,15 @@ const { logOut } = require("./controllers/logout");
 
 // Log out:
 // - logOut
+// {
+//   origin: "http://localhost:3000",
+//   credentials: true,
+// }
 
+// {
+//   origin: "http://localhost:3000",
+// }
+// app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

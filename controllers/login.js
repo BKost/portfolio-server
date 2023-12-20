@@ -19,7 +19,9 @@ const logIn = async (req, res) => {
     const user = await collection.findOne({ email });
 
     if (!user) {
-      return res.json({ msg: `User with mail ${email} does not exist` });
+      return res
+        .status(400)
+        .json({ msg: `User with mail ${email} does not exist` });
     }
 
     const { password: hashedPassword } = user;
@@ -27,7 +29,7 @@ const logIn = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
 
     if (!isPasswordCorrect) {
-      return res.json({ msg: `Provide correct password` });
+      return res.status(400).json({ msg: `Provide correct password` });
     }
 
     const { user_name, _id } = user;
@@ -38,7 +40,14 @@ const logIn = async (req, res) => {
 
     const eightHours = 28800000;
 
-    res.cookie("authToken", authToken, { maxAge: eightHours });
+    res.cookie("authToken", authToken, {
+      maxAge: eightHours,
+      // domain: undefined,
+      // secure: false,
+      // httpOnly: true,
+      // path: "/",
+    });
+
     res.cookie("user", { user_name, _id }, { maxAge: eightHours });
 
     res.end();
