@@ -1,6 +1,8 @@
 const { ObjectId } = require("mongodb");
 const { db } = require("../db/connectDB");
 const collection = db.collection("items");
+const path = require("path");
+const fs = require("fs");
 
 const getAllListings = async (req, res) => {
   const { userId } = req.user;
@@ -30,16 +32,71 @@ const getSingleListing = async (req, res) => {
 const uploadListing = async (req, res) => {
   const { userId } = req.user;
 
+  const { title, price, description } = req.body;
+
   let data = req.body;
 
-  data = { ...data, createdBy: userId };
+  const { fieldname, originalname, encoding, mimetype, buffer } = req.file;
+
+  const folderPath = path.join(__dirname, "../uploads");
+
+  // const imageBuffer = Buffer.from();
+
+  // check for correct image mimetype
+  if (!title || !price || !description) {
+    res.status(400).json({ msg: "Please fill out all fields in the form" });
+  }
+
+  const isImage = mimetype.startsWith("image");
+
+  if (!isImage) {
+    res
+      .status(400)
+      .json({ msg: "Please upload an image, not any other format" });
+  }
+
+  // const extension = mimetype.split("/")[1];
+  // const fileName = `${originalname}.${extension}`;
+
+  // const fileName = `${itemId}-${originalname}`;
+
+  function uploadImage(itemId) {
+    const fileName = `${itemId}-${originalname}`;
+
+    console.log(fileName);
+
+    fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
+      if (err) {
+        console.log("Error writing a file");
+      }
+    });
+  }
+
+  data = {
+    ...data,
+
+    createdBy: userId,
+  };
 
   try {
-    await collection.insertOne(data);
+    const { insertedId: itemId } = await collection.insertOne(data);
+
+    const imagePathWithItemId = `/uploads/${itemId}-${originalname}`;
+
+    await collection.findOneAndUpdate(
+      {
+        _id: new ObjectId(itemId),
+      },
+      { $set: { image: imagePathWithItemId } }
+    );
+
+    uploadImage(itemId);
 
     res.status(201).json({ msg: "New listing uploaded" });
   } catch (error) {
-    res.status(500).json({ msg: "Something went wrong - upload listing" });
+    res
+      .status(500)
+      .json({ msg: "Something went wrong - upload listing / image" });
   }
 };
 

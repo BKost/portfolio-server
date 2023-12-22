@@ -13,6 +13,7 @@ const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
 const cors = require("cors");
+const multer = require("multer");
 
 // Routers
 const categoriesRouter = require("./routes/items");
