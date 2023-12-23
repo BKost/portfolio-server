@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const path = require("path");
-
 const multer = require("multer");
 
 const {
@@ -13,11 +11,7 @@ const {
   uploadListing,
 } = require("../controllers/my-listings");
 
-const uploadsPath = path.join(__dirname, "../uploads");
-
 const upload = multer();
-
-// const { getAllItems, getSingleItem } = require("../controllers/categories");
 
 router
   .route("/")

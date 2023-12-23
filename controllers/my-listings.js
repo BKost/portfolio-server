@@ -36,6 +36,10 @@ const uploadListing = async (req, res) => {
 
   let data = req.body;
 
+  if (!req.file) {
+    return res.status(400).json({ msg: "Please upload an image file" });
+  }
+
   const { fieldname, originalname, encoding, mimetype, buffer } = req.file;
 
   const folderPath = path.join(__dirname, "../uploads");
@@ -44,13 +48,15 @@ const uploadListing = async (req, res) => {
 
   // check for correct image mimetype
   if (!title || !price || !description) {
-    res.status(400).json({ msg: "Please fill out all fields in the form" });
+    return res
+      .status(400)
+      .json({ msg: "Please fill out all fields in the form" });
   }
 
   const isImage = mimetype.startsWith("image");
 
   if (!isImage) {
-    res
+    return res
       .status(400)
       .json({ msg: "Please upload an image, not any other format" });
   }

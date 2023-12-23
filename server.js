@@ -58,6 +58,8 @@ const { logOut } = require("./controllers/logout");
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/uploads", express.static("./uploads"));
+
 app.post("/api/login", logIn);
 app.post("/api/register", register);
 app.get("/api/log-out", authMiddleware, logOut);
