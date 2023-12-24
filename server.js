@@ -12,8 +12,7 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
-const cors = require("cors");
-const multer = require("multer");
+// const cors = require("cors");
 
 // Routers
 const categoriesRouter = require("./routes/items");
@@ -58,7 +57,12 @@ const { logOut } = require("./controllers/logout");
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/uploads", express.static("./uploads"));
+app.use("/uploads", express.static(`${__dirname}/uploads`));
+
+// app.get("/uploads/:imageName", (req, res) => {
+//   console.log("Image requested");
+//   res.status(200).json({ msg: "Image requested" });
+// });
 
 app.post("/api/login", logIn);
 app.post("/api/register", register);

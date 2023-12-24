@@ -17,6 +17,7 @@ router
   .route("/")
   .get(getAllListings)
   .post(upload.single("image"), uploadListing);
+
 router
   .route("/:listingId")
   .get(getSingleListing)

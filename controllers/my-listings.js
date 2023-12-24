@@ -6,6 +6,7 @@ const fs = require("fs");
 
 const getAllListings = async (req, res) => {
   const { userId } = req.user;
+
   try {
     const listings = await collection.find({ createdBy: userId }).toArray();
 
@@ -137,6 +138,35 @@ const deleteListing = async (req, res) => {
     await collection.deleteOne({
       _id: new ObjectId(listingId),
     });
+
+    // access uploads folder,
+    //  loop through files,
+    // delete one which name startsWith selected id
+
+    const folderPath = path.join(__dirname, "../uploads");
+
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        return console.log(err);
+      }
+
+      files.forEach((fileName) => {
+        if (fileName.startsWith(listingId)) {
+          return deleteImage(fileName);
+        }
+      });
+    });
+
+    function deleteImage(fileName) {
+      const filePath = path.join(__dirname, "../uploads", fileName);
+
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.log("Error when deleting an image");
+          return res.status(500).json({ msg: "Error when deleting an image" });
+        }
+      });
+    }
 
     res.status(200).json({ msg: "Listing deleted" });
   } catch (error) {
