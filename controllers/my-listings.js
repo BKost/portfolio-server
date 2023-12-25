@@ -70,8 +70,6 @@ const uploadListing = async (req, res) => {
   function uploadImage(itemId) {
     const fileName = `${itemId}-${originalname}`;
 
-    console.log(fileName);
-
     fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
       if (err) {
         console.log("Error writing a file");
@@ -110,14 +108,80 @@ const uploadListing = async (req, res) => {
 const updateListing = async (req, res) => {
   const { listingId } = req.params;
 
-  const data = req.body;
+  let data = req.body;
 
-  // console.log(data);
-  // console.log(listingId);
+  const folderPath = path.join(__dirname, "../uploads");
 
-  // NEEDS MORE WORK !!!
+  function findAndDeleteOldImage() {
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        return console.log(err);
+      }
+
+      files.forEach((fileName) => {
+        if (fileName.startsWith(listingId)) {
+          return deleteImage(fileName);
+        }
+      });
+    });
+  }
+
+  function deleteImage(fileName) {
+    const filePath = path.join(__dirname, "../uploads", fileName);
+
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.log("Error when deleting an image");
+        return res.status(500).json({ msg: "Error when deleting an image" });
+      }
+    });
+  }
+  //
+  //
+  //
+
+  function uploadNewImage(buffer, itemId, originalname) {
+    const fileName = `${itemId}-${originalname}`;
+
+    fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
+      if (err) {
+        console.log("Error writing a file");
+      }
+    });
+  }
+
+  // delete old image
+  // upload new image
+  // upload image uri path
 
   try {
+    if (req.file) {
+      const { mimetype, buffer, originalname } = req.file;
+
+      const isImage = mimetype.startsWith("image");
+
+      if (!isImage) {
+        return res
+          .status(400)
+          .json({ msg: "Please upload an image, not any other format" });
+      }
+
+      findAndDeleteOldImage();
+      uploadNewImage(buffer, listingId, originalname);
+
+      data = {
+        ...data,
+        image: `/uploads/${listingId}-${originalname}`,
+      };
+
+      return await collection.updateOne(
+        {
+          _id: new ObjectId(listingId),
+        },
+        { $set: data }
+      );
+    }
+
     await collection.updateOne(
       {
         _id: new ObjectId(listingId),
@@ -138,10 +202,6 @@ const deleteListing = async (req, res) => {
     await collection.deleteOne({
       _id: new ObjectId(listingId),
     });
-
-    // access uploads folder,
-    //  loop through files,
-    // delete one which name startsWith selected id
 
     const folderPath = path.join(__dirname, "../uploads");
 

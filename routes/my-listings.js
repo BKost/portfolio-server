@@ -21,7 +21,7 @@ router
 router
   .route("/:listingId")
   .get(getSingleListing)
-  .patch(updateListing)
+  .patch(upload.single("image"), updateListing)
   .delete(deleteListing);
 
 module.exports = router;
