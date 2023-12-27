@@ -6,7 +6,7 @@ const { CustomAPIError } = require("../errors/custom-error");
 const bcrypt = require("bcryptjs");
 
 const register = async (req, res) => {
-  const registerUserData = req.body;
+  let registerUserData = req.body;
   console.log(registerUserData);
 
   const {
@@ -19,6 +19,16 @@ const register = async (req, res) => {
     email,
     address,
   } = registerUserData;
+
+  let data = {
+    user_name,
+    first_name,
+    last_name,
+    phone,
+    password,
+    email,
+    address,
+  };
 
   try {
     // const compare = await bcrypt.compare("password", hashed);
@@ -62,9 +72,24 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log(hashedPassword);
 
-    registerUserData.password = hashedPassword;
+    // registerUserData.password = hashedPassword;
+    data.password = hashedPassword;
+
+    const entries = Object.entries(address);
+
+    let isAddressComplete = false;
+
+    entries.forEach(([key, value]) => {
+      if (!value) {
+        return (isAddressComplete = false);
+      }
+      return (isAddressComplete = true);
+    });
+
+    data = { ...data, isAddressComplete };
+
     // Store hash in your password DB.
-    await collection.insertOne(registerUserData);
+    await collection.insertOne(data);
     res.status(201).json({ msg: "User registered" });
     // Send email
   } catch (error) {

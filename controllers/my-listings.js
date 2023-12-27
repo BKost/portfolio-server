@@ -174,12 +174,14 @@ const updateListing = async (req, res) => {
         image: `/uploads/${listingId}-${originalname}`,
       };
 
-      return await collection.updateOne(
+      await collection.updateOne(
         {
           _id: new ObjectId(listingId),
         },
         { $set: data }
       );
+
+      return res.status(200).json({ msg: `Listing updated`, data });
     }
 
     await collection.updateOne(
@@ -189,7 +191,7 @@ const updateListing = async (req, res) => {
       { $set: data }
     );
 
-    res.status(200).json({ msg: `Listing updated` });
+    return res.status(200).json({ msg: `Listing updated`, data });
   } catch (error) {
     res.status(500).json({ msg: "Something went wrong - get single listing" });
   }

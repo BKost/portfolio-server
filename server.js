@@ -23,28 +23,6 @@ const { logIn } = require("./controllers/login");
 const { register } = require("./controllers/register");
 const { logOut } = require("./controllers/logout");
 
-// Categories:
-// - getAllItems
-// - getSingleItem
-
-// My listings:
-// - getAllItems
-// - deleteItem
-// - updateItem
-// - uploadItem
-
-// My profile:
-// getProfileInfo
-// updateProfileInfo
-
-// Register:
-// - registerUser
-
-// Login:
-// - logIn
-
-// Log out:
-// - logOut
 // {
 //   origin: "http://localhost:3000",
 //   credentials: true,
@@ -58,11 +36,6 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/uploads", express.static(`${__dirname}/uploads`));
-
-// app.get("/uploads/:imageName", (req, res) => {
-//   console.log("Image requested");
-//   res.status(200).json({ msg: "Image requested" });
-// });
 
 app.post("/api/login", logIn);
 app.post("/api/register", register);

@@ -1,28 +1,98 @@
 const { ObjectId } = require("mongodb");
 const { db } = require("../db/connectDB");
+const bcrypt = require("bcryptjs");
 const users = db.collection("users");
 const items = db.collection("items");
 
+const getProfile = async (req, res) => {
+  // const { id } = req.params;
+
+  const { userId } = req.user;
+
+  try {
+    let userData = await users.findOne({ _id: new ObjectId(userId) });
+
+    delete userData.password;
+
+    res.status(200).json({ msg: "User profile data", userData });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: "Something went wrong - get user profile info" });
+  }
+};
+
 const updateProfile = async (req, res) => {
-  const { id } = req.params;
+  const { userId } = req.user;
 
-  const data = req.body;
+  let data = req.body;
+  // console.log(data);
 
-  console.log(data);
+  const {
+    user_name,
+    last_name,
+    first_name,
+    phone,
+    password,
+    confirm_password,
+    email,
+    address,
+  } = data;
 
-  // SPECIAL ATTENTION !!!
+  // check if all fields are filled
+
+  console.log(password, confirm_password);
+
+  if (!user_name || !last_name || !first_name || !phone || !email) {
+    return res.status(400).json({ msg: "Fill out all required fields" });
+  }
+
+  if (password || confirm_password) {
+    if (password !== confirm_password) {
+      return res
+        .status(400)
+        .json({ msg: "Password you provided doesn t match" });
+    }
+
+    // !!!!!!!!!!!
+    // hash password
+    const hashedPassword = "hashedPassword";
+
+    data = { ...data, hashedPassword };
+  }
+
+  if (!password || !confirm_password) {
+    delete data.password;
+    delete data.confirm_password;
+
+    // You STopped Here
+  }
+
+  const entries = Object.entries(address);
+
+  let isAddressComplete = false;
+
+  entries.forEach(([key, value]) => {
+    if (!value) {
+      return (isAddressComplete = false);
+    }
+    return (isAddressComplete = true);
+  });
+
+  data = { ...data, isAddressComplete };
 
   try {
     // const updateUser = await users.updateOne(
-    //   { _id: new ObjectId(id) },
+    //   { _id: new ObjectId(userId) },
     //   { $set: {} }
     // );
-  } catch (error) {}
 
-  console.log(id);
-
-  res.send("Update Profile");
+    res.status(200).json({ msg: "Updated user profile", data });
+  } catch (error) {
+    res.status(500).json({ msg: "Something went wrong - update user profile" });
+  }
 };
+
 const deleteProfile = async (req, res) => {
   const { id } = req.params;
 
@@ -45,4 +115,4 @@ const deleteProfile = async (req, res) => {
   // res.send("Delete Profile");
 };
 
-module.exports = { deleteProfile, updateProfile };
+module.exports = { deleteProfile, updateProfile, getProfile };
