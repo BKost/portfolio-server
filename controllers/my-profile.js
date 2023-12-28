@@ -41,8 +41,6 @@ const updateProfile = async (req, res) => {
 
   // check if all fields are filled
 
-  console.log(password, confirm_password);
-
   if (!user_name || !last_name || !first_name || !phone || !email) {
     return res.status(400).json({ msg: "Fill out all required fields" });
   }
@@ -54,11 +52,13 @@ const updateProfile = async (req, res) => {
         .json({ msg: "Password you provided doesn t match" });
     }
 
+    delete data.confirm_password;
+
     // !!!!!!!!!!!
     // hash password
-    const hashedPassword = "hashedPassword";
-
-    data = { ...data, hashedPassword };
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    data.password = hashedPassword;
   }
 
   if (!password || !confirm_password) {
@@ -82,13 +82,17 @@ const updateProfile = async (req, res) => {
   data = { ...data, isAddressComplete };
 
   try {
-    // const updateUser = await users.updateOne(
-    //   { _id: new ObjectId(userId) },
-    //   { $set: {} }
-    // );
+    delete data._id;
+
+    const updateUser = await users.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: data }
+    );
+    console.log(updateUser);
 
     res.status(200).json({ msg: "Updated user profile", data });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ msg: "Something went wrong - update user profile" });
   }
 };

@@ -33,9 +33,15 @@ const getSingleListing = async (req, res) => {
 const uploadListing = async (req, res) => {
   const { userId } = req.user;
 
-  const { title, price, description } = req.body;
-
   let data = req.body;
+
+  const { title, price, description, category } = req.body;
+
+  if (!title || !price || !description || !category) {
+    return res
+      .status(400)
+      .json({ msg: "Please fill out all fields in the form" });
+  }
 
   if (!req.file) {
     return res.status(400).json({ msg: "Please upload an image file" });
@@ -44,15 +50,6 @@ const uploadListing = async (req, res) => {
   const { fieldname, originalname, encoding, mimetype, buffer } = req.file;
 
   const folderPath = path.join(__dirname, "../uploads");
-
-  // const imageBuffer = Buffer.from();
-
-  // check for correct image mimetype
-  if (!title || !price || !description) {
-    return res
-      .status(400)
-      .json({ msg: "Please fill out all fields in the form" });
-  }
 
   const isImage = mimetype.startsWith("image");
 
@@ -109,6 +106,12 @@ const updateListing = async (req, res) => {
   const { listingId } = req.params;
 
   let data = req.body;
+
+  const { title, price, description, category } = req.body;
+
+  if (!title || !price || !description || !category) {
+    return res.status(400).json({ msg: "Fill out all required fields" });
+  }
 
   const folderPath = path.join(__dirname, "../uploads");
 
