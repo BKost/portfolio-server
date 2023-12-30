@@ -12,6 +12,10 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
+// Stripe payment
+
+const stripe = require("stripe")(process.env.STRIPE_CLIENT_SECRET);
+
 // const cors = require("cors");
 
 // Routers
@@ -36,6 +40,24 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/uploads", express.static(`${__dirname}/uploads`));
+
+app.post("/api/payment", async (req, res) => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 100,
+      currency: "eur",
+    });
+
+    res.status(200).json({
+      msg: "Payment intent sent",
+      secretKey: paymentIntent.client_secret,
+      secret: "123",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Something went wrong - Payment intent" });
+  }
+});
 
 app.post("/api/login", logIn);
 app.post("/api/register", register);
