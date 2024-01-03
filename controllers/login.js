@@ -42,15 +42,13 @@ const logIn = async (req, res) => {
 
     res.cookie("authToken", authToken, {
       maxAge: eightHours,
-      // domain: undefined,
-      // secure: false,
-      // httpOnly: true,
-      // path: "/",
+
+      httpOnly: true,
     });
 
     res.cookie("user", { user_name, _id }, { maxAge: eightHours });
 
-    res.end();
+    res.status(200).json({ user_name });
   } catch (error) {
     res.status(500).json({
       msg: `${err.message} - login` || "Something went wrong - login",

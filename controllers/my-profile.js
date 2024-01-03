@@ -3,6 +3,9 @@ const { db } = require("../db/connectDB");
 const bcrypt = require("bcryptjs");
 const users = db.collection("users");
 const items = db.collection("items");
+const fs = require("fs");
+const path = require("path");
+const transporter = require("../sendMail");
 
 const getProfile = async (req, res) => {
   // const { id } = req.params;
@@ -98,18 +101,65 @@ const updateProfile = async (req, res) => {
 };
 
 const deleteProfile = async (req, res) => {
-  const { id } = req.params;
-
-  console.log(id);
+  const { user_name, userId } = req.user;
 
   try {
-    const deleteUser = await users.deleteOne({ _id: new ObjectId(id) });
-    const deleteUserItems = await items.deleteMany({ createdBy: id });
+    const deleteUser = await users.deleteOne({ _id: new ObjectId(userId) });
+    const deleteUserItems = await items.deleteMany({ createdBy: userId });
+
+    console.log(deleteUser);
 
     // CLear cookies of deleted user
 
-    console.log(deleteUser);
-    console.log(deleteUserItems);
+    // Delete images from server
+
+    const folderPath = path.join(__dirname, "../uploads");
+
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        return console.log(err);
+      }
+
+      if (files.length > 0) {
+        files.forEach((fileName) => {
+          if (fileName.includes(userId)) {
+            return deleteImage(fileName);
+          }
+        });
+      }
+    });
+
+    function deleteImage(fileName) {
+      const filePath = path.join(__dirname, "../uploads", fileName);
+
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.log("Error when deleting an image");
+          return res
+            .status(500)
+            .json({ msg: "Error when deleting an image - delete account" });
+        }
+      });
+    }
+
+    res.cookie("authToken", "deleted", { maxAge: 0 });
+
+    res.cookie("user", "deleted", { maxAge: 0 });
+
+    const message = {
+      from: "my-project@server",
+      to: "brenda.rempel44@ethereal.email",
+      subject: `Deleted account: ${user_name}`,
+      text: `Account of ${user_name} is deleted`,
+      html: `<p >Account of ${user_name} is deleted</p>`,
+    };
+
+    transporter.sendMail(message, (err) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ msg: "Error sending email" });
+      }
+    });
 
     res.status(200).json({ msg: "Profile deleted" });
   } catch (error) {

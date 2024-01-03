@@ -24,8 +24,8 @@ const myListingsRouter = require("./routes/my-listings");
 const myProfileRouter = require("./routes/my-profile");
 
 const { logIn } = require("./controllers/login");
-const { register } = require("./controllers/register");
 const { logOut } = require("./controllers/logout");
+const { register } = require("./controllers/register");
 
 // {
 //   origin: "http://localhost:3000",
@@ -51,7 +51,6 @@ app.post("/api/payment", async (req, res) => {
     res.status(200).json({
       msg: "Payment intent sent",
       secretKey: paymentIntent.client_secret,
-      secret: "123",
     });
   } catch (error) {
     console.log(error);
@@ -60,8 +59,8 @@ app.post("/api/payment", async (req, res) => {
 });
 
 app.post("/api/login", logIn);
+app.get("/api/logout", authMiddleware, logOut);
 app.post("/api/register", register);
-app.get("/api/log-out", authMiddleware, logOut);
 
 app.use("/api/items", categoriesRouter);
 app.use("/api/my-listings", authMiddleware, myListingsRouter);

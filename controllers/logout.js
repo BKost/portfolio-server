@@ -1,5 +1,6 @@
 const logOut = async (req, res) => {
-  res.send("Log Out");
+  res.cookie("authToken", "deleted", { maxAge: 0 });
+  res.status(200).json({ msg: "You have been logged out" });
 };
 
 module.exports = { logOut };

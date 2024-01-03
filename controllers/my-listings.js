@@ -63,9 +63,10 @@ const uploadListing = async (req, res) => {
   // const fileName = `${originalname}.${extension}`;
 
   // const fileName = `${itemId}-${originalname}`;
+  // const fileName = `${itemId}-${userId}-${originalname}`;
 
   function uploadImage(itemId) {
-    const fileName = `${itemId}-${originalname}`;
+    const fileName = `${itemId}-${userId}-${originalname}`;
 
     fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
       if (err) {
@@ -83,7 +84,7 @@ const uploadListing = async (req, res) => {
   try {
     const { insertedId: itemId } = await collection.insertOne(data);
 
-    const imagePathWithItemId = `/uploads/${itemId}-${originalname}`;
+    const imagePathWithItemId = `/uploads/${itemId}-${userId}-${originalname}`;
 
     await collection.findOneAndUpdate(
       {
@@ -104,6 +105,7 @@ const uploadListing = async (req, res) => {
 
 const updateListing = async (req, res) => {
   const { listingId } = req.params;
+  const { userId } = req.user;
 
   let data = req.body;
 
@@ -144,7 +146,7 @@ const updateListing = async (req, res) => {
   //
 
   function uploadNewImage(buffer, itemId, originalname) {
-    const fileName = `${itemId}-${originalname}`;
+    const fileName = `${itemId}-${userId}-${originalname}`;
 
     fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
       if (err) {
@@ -174,7 +176,7 @@ const updateListing = async (req, res) => {
 
       data = {
         ...data,
-        image: `/uploads/${listingId}-${originalname}`,
+        image: `/uploads/${listingId}-${userId}-${originalname}`,
       };
 
       await collection.updateOne(
