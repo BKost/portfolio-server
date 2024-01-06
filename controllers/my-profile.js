@@ -29,7 +29,6 @@ const updateProfile = async (req, res) => {
   const { userId } = req.user;
 
   let data = req.body;
-  // console.log(data);
 
   const {
     user_name,
@@ -67,19 +66,16 @@ const updateProfile = async (req, res) => {
   if (!password || !confirm_password) {
     delete data.password;
     delete data.confirm_password;
-
-    // You STopped Here
   }
 
   const entries = Object.entries(address);
 
-  let isAddressComplete = false;
+  let isAddressComplete = true;
 
   entries.forEach(([key, value]) => {
     if (!value) {
       return (isAddressComplete = false);
     }
-    return (isAddressComplete = true);
   });
 
   data = { ...data, isAddressComplete };
@@ -151,7 +147,7 @@ const deleteProfile = async (req, res) => {
       to: "brenda.rempel44@ethereal.email",
       subject: `Deleted account: ${user_name}`,
       text: `Account of ${user_name} is deleted`,
-      html: `<p >Account of ${user_name} is deleted</p>`,
+      html: `<p>Account of ${user_name} is deleted</p>`,
     };
 
     transporter.sendMail(message, (err) => {

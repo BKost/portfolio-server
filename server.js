@@ -12,20 +12,21 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
-// Stripe payment
-
-const stripe = require("stripe")(process.env.STRIPE_CLIENT_SECRET);
-
 // const cors = require("cors");
 
 // Routers
 const categoriesRouter = require("./routes/items");
 const myListingsRouter = require("./routes/my-listings");
 const myProfileRouter = require("./routes/my-profile");
+const shoppingCartRouter = require("./routes/shopping-cart");
+const stripeRouter = require("./routes/stripe");
 
 const { logIn } = require("./controllers/login");
 const { logOut } = require("./controllers/logout");
 const { register } = require("./controllers/register");
+const { addToCart } = require("./controllers/shopping-cart");
+// Stripe payment
+const { createPaymentIntent } = require("./controllers/stripe");
 
 // {
 //   origin: "http://localhost:3000",
@@ -40,23 +41,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/uploads", express.static(`${__dirname}/uploads`));
+app.use("/api/payment", stripeRouter);
 
-app.post("/api/payment", async (req, res) => {
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 100,
-      currency: "eur",
-    });
-
-    res.status(200).json({
-      msg: "Payment intent sent",
-      secretKey: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ msg: "Something went wrong - Payment intent" });
-  }
-});
+app.use("/api/shopping-cart", shoppingCartRouter);
 
 app.post("/api/login", logIn);
 app.get("/api/logout", authMiddleware, logOut);
