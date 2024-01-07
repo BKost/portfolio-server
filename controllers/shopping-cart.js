@@ -24,7 +24,7 @@ const addToCart = async (req, res) => {
       });
 
       const eightHours = 28800000;
-      res.cookie("cartId", cartId, { httpOnly: true, maxAge: eightHours });
+      res.cookie("cartId", cartId, { maxAge: eightHours });
 
       return res
         .status(201)
@@ -69,4 +69,26 @@ const deleteFromCart = async (req, res) => {
   }
 };
 
-module.exports = { addToCart, deleteFromCart };
+const deleteShoppingCart = async (req, res) => {
+  const { cartId } = req.cookies;
+
+  try {
+    const deletedCart = await carts.findOneAndDelete({
+      _id: new ObjectId(cartId),
+    });
+
+    // delete cart
+    // delete cookie
+    res.cookie("cartId", "deleted", { maxAge: 0 });
+
+    res
+      .status(200)
+      .json({ msg: `Shoppingcart with cartId: ${cartId} deleted` });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: `Error deleting shoppingcart with cartId: ${cartId}` });
+  }
+};
+
+module.exports = { addToCart, deleteFromCart, deleteShoppingCart };

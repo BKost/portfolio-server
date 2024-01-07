@@ -36,7 +36,7 @@ const createPaymentIntent = async (req, res) => {
         total = total + Number(item.price);
       });
 
-      console.log(total);
+      // console.log(total);
 
       return total;
     }
@@ -45,10 +45,6 @@ const createPaymentIntent = async (req, res) => {
       amount: calculateAmount(),
       currency: "eur",
     });
-
-    // sent order confirmation mail
-
-    console.log(paymentIntent.status);
 
     res.status(200).json({
       msg: "Payment intent sent",
@@ -61,22 +57,27 @@ const createPaymentIntent = async (req, res) => {
 };
 
 const emailConfirmation = (req, res) => {
+  // const { first_name, last_name, email, address, phone } = req.body;
+
+  const { buyerInfo, amount } = req.body;
+
+  const { first_name, last_name, email, address, phone } = buyerInfo;
+
   const message = {
     from: "my-project@server",
+    // email is hardcoded for ethereal testing
     to: "brenda.rempel44@ethereal.email",
-    subject: `Registered new user: ${user_name}`,
-    text: `Thank you for registering ${first_name} ${last_name}`,
-    html: "<p style:'color: red' >HTML vesrion of the message</p>",
+    subject: `Order confirmation for ${first_name} ${last_name} `,
+    text: `Your order will arrive soon. \n Payment: ${amount}$ \n Delivery address:\n Name: ${first_name} ${last_name} \n Phone number:  ${phone} \n Email: ${email} \n Street: ${address.street_name}, \n City: ${address.city}`,
+    html: `<p> Your order will arrive soon. \n Payment: ${amount}$ \n Delivery address:\n Name: ${first_name} ${last_name} \n Phone number:  ${phone} \n Email: ${email} \n Street: ${address.street_name}, \n City: ${address.city}</p>`,
   };
 
-  // transporter.sendMail(message, (err) => {
-  //   if (err) {
-  //     console.log(err);
-  //     return res.status(500).json({ msg: "Error sending email" });
-  //   }
-  // });
-
-  console.log("Email sent");
+  transporter.sendMail(message, (err) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ msg: "Error sending email" });
+    }
+  });
 
   res.status(200).json({ msg: "Order confirmation sent successfully" });
 };
