@@ -16,7 +16,10 @@ const addToCart = async (req, res) => {
 
   try {
     if (!cartId) {
-      const { insertedId } = await carts.insertOne({ cart: [cartItem] });
+      const { insertedId } = await carts.insertOne({
+        cart: [cartItem],
+        date: new Date(),
+      });
       const cartId = insertedId.toString();
 
       const shoppingCart = await carts.findOne({
@@ -91,4 +94,26 @@ const deleteShoppingCart = async (req, res) => {
   }
 };
 
-module.exports = { addToCart, deleteFromCart, deleteShoppingCart };
+const clearStaleCarts = (req, res) => {
+  // const oneMinute = 6000;
+
+  const oneDay = 86400000;
+
+  setInterval(() => {
+    const filter = {
+      date: { $lt: new Date(Date.now() - oneDay) },
+    };
+
+    carts
+      .deleteMany(filter)
+      .then((res) => console.log(res, "Stale carts deleted"))
+      .catch((err) => console.log(err));
+  }, oneDay);
+};
+
+module.exports = {
+  addToCart,
+  deleteFromCart,
+  deleteShoppingCart,
+  clearStaleCarts,
+};

@@ -24,9 +24,11 @@ const stripeRouter = require("./routes/stripe");
 const { logIn } = require("./controllers/login");
 const { logOut } = require("./controllers/logout");
 const { register } = require("./controllers/register");
-const { addToCart } = require("./controllers/shopping-cart");
+
+const { clearStaleCarts } = require("./controllers/shopping-cart");
+// const { addToCart } = require("./controllers/shopping-cart");
 // Stripe payment
-const { createPaymentIntent } = require("./controllers/stripe");
+// const { createPaymentIntent } = require("./controllers/stripe");
 
 // {
 //   origin: "http://localhost:3000",
@@ -39,6 +41,7 @@ const { createPaymentIntent } = require("./controllers/stripe");
 // app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+// console.log(new Date());
 
 app.use("/uploads", express.static(`${__dirname}/uploads`));
 app.use("/api/payment", stripeRouter);
@@ -69,6 +72,7 @@ const start = async () => {
   try {
     await connectToDatabase();
     app.listen(port, console.log(`App listening on port ${port}`));
+    clearStaleCarts();
   } catch (error) {
     console.log(error);
   }

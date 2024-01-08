@@ -48,7 +48,7 @@ const logIn = async (req, res) => {
 
     res.cookie("user", { user_name, _id }, { maxAge: eightHours });
 
-    res.status(200).json({ user_name });
+    res.status(200).json({ msg: `User ${user_name} logged in` });
   } catch (error) {
     res.status(500).json({
       msg: `${err.message} - login` || "Something went wrong - login",
