@@ -57,19 +57,18 @@ app.use("/api/items", categoriesRouter);
 app.use("/api/my-listings", authMiddleware, myListingsRouter);
 app.use("/api/my-profile", authMiddleware, myProfileRouter);
 
-// app.get("/", (req, res) => {
-//   res.send("Home");
-// });
-
-app.use(express.static(path.join(__dirname, "build")));
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Route NOt Found
-app.use(notFoundMiddleware);
+app.use(express.static(path.join(__dirname, "build")));
 
+// Route NOt Found
+// app.use(notFoundMiddleware);
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 // Custom Error Handler
 app.use(errorHandlerMiddleware);
 
