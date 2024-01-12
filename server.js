@@ -4,7 +4,15 @@ const path = require("path");
 const express = require("express");
 const app = express();
 
-// donnectDBr
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// connectDB
 const { connectToDatabase } = require("./db/connectDB");
 
 // Middleware
@@ -13,7 +21,7 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 
-// const cors = require("cors");
+const cors = require("cors");
 
 // Routers
 const categoriesRouter = require("./routes/items");
@@ -39,7 +47,7 @@ const { clearStaleCarts } = require("./controllers/shopping-cart");
 // {
 //   origin: "http://localhost:3000",
 // }
-// app.use(cors({ credentials: true }));
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 // console.log(new Date());
@@ -56,6 +64,10 @@ app.post("/api/register", register);
 app.use("/api/items", categoriesRouter);
 app.use("/api/my-listings", authMiddleware, myListingsRouter);
 app.use("/api/my-profile", authMiddleware, myProfileRouter);
+
+// app.post("/api/upload-image", (req, res) => {
+//   res.send("Upload image cloduinary");
+// });
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));

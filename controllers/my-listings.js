@@ -3,7 +3,7 @@ const { db } = require("../db/connectDB");
 const collection = db.collection("items");
 const path = require("path");
 const fs = require("fs");
-
+const cloudinary = require("cloudinary").v2;
 const getAllListings = async (req, res) => {
   const { userId } = req.user;
 
@@ -49,8 +49,6 @@ const uploadListing = async (req, res) => {
 
   const { fieldname, originalname, encoding, mimetype, buffer } = req.file;
 
-  const folderPath = path.join(__dirname, "../uploads");
-
   const isImage = mimetype.startsWith("image");
 
   if (!isImage) {
@@ -59,20 +57,46 @@ const uploadListing = async (req, res) => {
       .json({ msg: "Please upload an image, not any other format" });
   }
 
-  // const extension = mimetype.split("/")[1];
-  // const fileName = `${originalname}.${extension}`;
+  async function uploadImageCloudinary(itemId) {
+    const folderPath = path.join(__dirname, "../temporary-upload/");
 
-  // const fileName = `${itemId}-${originalname}`;
-  // const fileName = `${itemId}-${userId}-${originalname}`;
-
-  function uploadImage(itemId) {
-    const fileName = `${itemId}-${userId}-${originalname}`;
-
-    fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
+    fs.writeFile(`${folderPath}/${originalname}`, buffer, (err) => {
       if (err) {
-        console.log("Error writing a file");
+        console.log(err);
+        return res
+          .status(500)
+          .json({ msg: "Error writing a file - temporary-uploads" });
       }
     });
+
+    const imageToUpload = path.join(
+      __dirname,
+      "../temporary-upload/",
+      originalname
+    );
+
+    try {
+      const imageId = `${userId}-${itemId}`;
+
+      const result = await cloudinary.uploader.upload(imageToUpload, {
+        public_id: imageId,
+        folder: "uploads",
+      });
+
+      console.log(result);
+
+      fs.unlink(imageToUpload, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res
+        .status(500)
+        .json({ msg: "Error - uploading image to cloudinary" });
+    }
   }
 
   data = {
@@ -84,7 +108,7 @@ const uploadListing = async (req, res) => {
   try {
     const { insertedId: itemId } = await collection.insertOne(data);
 
-    const imagePathWithItemId = `/uploads/${itemId}-${userId}-${originalname}`;
+    const imagePathWithItemId = `http://res.cloudinary.com/dqrbs7uav/image/upload/v1705071564/uploads/${userId}-${itemId}`;
 
     await collection.findOneAndUpdate(
       {
@@ -93,7 +117,8 @@ const uploadListing = async (req, res) => {
       { $set: { image: imagePathWithItemId } }
     );
 
-    uploadImage(itemId);
+    // uploadImage(itemId);
+    uploadImageCloudinary(itemId);
 
     res.status(201).json({ msg: "New listing uploaded" });
   } catch (error) {
@@ -117,51 +142,79 @@ const updateListing = async (req, res) => {
 
   const folderPath = path.join(__dirname, "../uploads");
 
-  function findAndDeleteOldImage() {
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        return console.log(err);
-      }
+  async function replaceImageCloudinary(buffer, originalname) {
+    const folderPath = path.join(__dirname, "../temporary-upload/");
 
-      files.forEach((fileName) => {
-        if (fileName.startsWith(listingId)) {
-          return deleteImage(fileName);
+    fs.writeFile(`${folderPath}/${originalname}`, buffer, (err) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          msg: "Error writing a file - temporary-uploads - replace image",
+        });
+      }
+    });
+
+    try {
+      const prefix = `uploads/${userId}`;
+
+      const { resources } = await cloudinary.api.resources({
+        type: "upload",
+        prefix: prefix,
+      });
+
+      resources.find((item) => {
+        const { public_id } = item;
+
+        if (public_id.includes(listingId)) {
+          const imageToUpload = path.join(
+            __dirname,
+            "../temporary-upload/",
+            originalname
+          );
+
+          cloudinary.uploader
+            .upload(imageToUpload, {
+              public_id,
+              overwrite: true,
+            })
+
+            .then((response) => {
+              console.log(response);
+              const filePath = path.join(
+                __dirname,
+                "../temporary-upload/",
+                originalname
+              );
+
+              fs.unlink(filePath, (err) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(500).json({
+                    msg: "Error updating post - image upload - deleting temporary file",
+                  });
+                }
+              });
+            })
+            .catch((err) => {
+              console.log(err);
+              return res.status(500).json({
+                msg: "Error updating post - image upload",
+              });
+            });
         }
       });
-    });
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(500)
+        .json({ msg: "Error updating post - image upload" });
+    }
   }
-
-  function deleteImage(fileName) {
-    const filePath = path.join(__dirname, "../uploads", fileName);
-
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.log("Error when deleting an image");
-        return res.status(500).json({ msg: "Error when deleting an image" });
-      }
-    });
-  }
-  //
-  //
-  //
-
-  function uploadNewImage(buffer, itemId, originalname) {
-    const fileName = `${itemId}-${userId}-${originalname}`;
-
-    fs.writeFile(`${folderPath}/${fileName}/`, buffer, (err) => {
-      if (err) {
-        console.log("Error writing a file");
-      }
-    });
-  }
-
-  // delete old image
-  // upload new image
-  // upload image uri path
 
   try {
     if (req.file) {
       const { mimetype, buffer, originalname } = req.file;
+      console.log(req.file);
 
       const isImage = mimetype.startsWith("image");
 
@@ -171,12 +224,15 @@ const updateListing = async (req, res) => {
           .json({ msg: "Please upload an image, not any other format" });
       }
 
-      findAndDeleteOldImage();
-      uploadNewImage(buffer, listingId, originalname);
+      replaceImageCloudinary(buffer, originalname);
+
+      const extension = mimetype.split("/")[1];
+
+      const imagePathWithItemId = `http://res.cloudinary.com/dqrbs7uav/image/upload/v1705071564/uploads/${userId}-${listingId}.${extension}`;
 
       data = {
         ...data,
-        image: `/uploads/${listingId}-${userId}-${originalname}`,
+        image: imagePathWithItemId,
       };
 
       await collection.updateOne(
