@@ -58,7 +58,7 @@ const uploadListing = async (req, res) => {
   }
 
   async function uploadImageCloudinary(itemId) {
-    const folderPath = path.join(__dirname, "../temporary-upload/");
+    const folderPath = path.join(__dirname, "../temporary-upload");
 
     fs.writeFile(`${folderPath}/${originalname}`, buffer, (err) => {
       if (err) {
