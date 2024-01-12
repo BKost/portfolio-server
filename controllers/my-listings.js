@@ -4,6 +4,9 @@ const collection = db.collection("items");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
+
+const { Readable } = require("stream");
+
 const getAllListings = async (req, res) => {
   const { userId } = req.user;
 
@@ -58,38 +61,29 @@ const uploadListing = async (req, res) => {
   }
 
   async function uploadImageCloudinary(itemId) {
-    const folderPath = path.join(__dirname, "../temporary-upload");
-
-    fs.writeFile(`${folderPath}/${originalname}`, buffer, (err) => {
-      if (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .json({ msg: "Error writing a file - temporary-uploads" });
-      }
-    });
-
-    const imageToUpload = path.join(
-      __dirname,
-      "../temporary-upload/",
-      originalname
-    );
+    // const folderPath = path.join(__dirname, "../temporary-upload");
 
     try {
       const imageId = `${userId}-${itemId}`;
 
-      const result = await cloudinary.uploader.upload(imageToUpload, {
-        public_id: imageId,
-        folder: "uploads",
-      });
+      cloudinary.uploader
+        .upload_stream(
+          {
+            public_id: imageId,
+            resource_type: "image",
+            folder: "uploads",
+          },
+          (error, result) => {
+            if (error) {
+              console.error(error);
+              return res.status(500).json({ msg: "Error uploading image." });
+            }
 
-      console.log(result);
-
-      fs.unlink(imageToUpload, (err) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+            console.log(result);
+            //  return res.status(200).json({ msg: "Image uploaded successfully." });
+          }
+        )
+        .end(req.file.buffer);
     } catch (error) {
       console.log(error);
 
@@ -140,20 +134,7 @@ const updateListing = async (req, res) => {
     return res.status(400).json({ msg: "Fill out all required fields" });
   }
 
-  const folderPath = path.join(__dirname, "../uploads");
-
   async function replaceImageCloudinary(buffer, originalname) {
-    const folderPath = path.join(__dirname, "../temporary-upload/");
-
-    fs.writeFile(`${folderPath}/${originalname}`, buffer, (err) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({
-          msg: "Error writing a file - temporary-uploads - replace image",
-        });
-      }
-    });
-
     try {
       const prefix = `uploads/${userId}`;
 
@@ -162,45 +143,32 @@ const updateListing = async (req, res) => {
         prefix: prefix,
       });
 
+      // console.log(resources);
+
       resources.find((item) => {
         const { public_id } = item;
 
         if (public_id.includes(listingId)) {
-          const imageToUpload = path.join(
-            __dirname,
-            "../temporary-upload/",
-            originalname
-          );
-
           cloudinary.uploader
-            .upload(imageToUpload, {
-              public_id,
-              overwrite: true,
-            })
-
-            .then((response) => {
-              console.log(response);
-              const filePath = path.join(
-                __dirname,
-                "../temporary-upload/",
-                originalname
-              );
-
-              fs.unlink(filePath, (err) => {
-                if (err) {
-                  console.log(err);
-                  return res.status(500).json({
-                    msg: "Error updating post - image upload - deleting temporary file",
-                  });
+            .upload_stream(
+              {
+                public_id: `${userId}-${listingId}`,
+                resource_type: "image",
+                overwrite: true,
+                folder: "uploads",
+                use_filename: true,
+              },
+              (error, result) => {
+                if (error) {
+                  console.error(error);
+                  return res
+                    .status(500)
+                    .json({ msg: "Error uploading image." });
                 }
-              });
-            })
-            .catch((err) => {
-              console.log(err);
-              return res.status(500).json({
-                msg: "Error updating post - image upload",
-              });
-            });
+                console.log(result);
+              }
+            )
+            .end(buffer);
         }
       });
     } catch (error) {
@@ -214,7 +182,6 @@ const updateListing = async (req, res) => {
   try {
     if (req.file) {
       const { mimetype, buffer, originalname } = req.file;
-      console.log(req.file);
 
       const isImage = mimetype.startsWith("image");
 
