@@ -5,8 +5,6 @@ const path = require("path");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 
-const { Readable } = require("stream");
-
 const getAllListings = async (req, res) => {
   const { userId } = req.user;
 
@@ -60,30 +58,47 @@ const uploadListing = async (req, res) => {
       .json({ msg: "Please upload an image, not any other format" });
   }
 
-  async function uploadImageCloudinary(itemId) {
-    // const folderPath = path.join(__dirname, "../temporary-upload");
+  async function uploadImageCloudinary(buffer, itemId, originalname) {
+    const folderPath = path.join(__dirname, "../temp");
+
+    fs.mkdir(folderPath, (err) => {
+      if (err) {
+        console.log("Error making folder");
+      }
+    });
+
+    const filePath = `${folderPath}/${originalname}`;
+
+    fs.writeFile(filePath, buffer, (err) => {
+      if (err) {
+        console.log("Err writing a file");
+      }
+    });
 
     try {
+      const imageFilePath = path.join(__dirname, "../temp", originalname);
+
       const imageId = `${userId}-${itemId}`;
 
-      cloudinary.uploader
-        .upload_stream(
-          {
-            public_id: imageId,
-            resource_type: "image",
-            folder: "uploads",
-          },
-          (error, result) => {
-            if (error) {
-              console.error(error);
-              return res.status(500).json({ msg: "Error uploading image." });
-            }
+      const result = await cloudinary.uploader.upload(imageFilePath, {
+        public_id: imageId,
+        folder: "uploads",
+        resource_type: "image",
+      });
 
-            console.log(result);
-            //  return res.status(200).json({ msg: "Image uploaded successfully." });
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.log(err, "Error deleteing file");
+        }
+        fs.rmdir(folderPath, (err) => {
+          if (err) {
+            console.log(err);
+            console.log("Err deleting temp folder");
           }
-        )
-        .end(req.file.buffer);
+        });
+      });
+
+      // console.log(result);
     } catch (error) {
       console.log(error);
 
@@ -102,7 +117,7 @@ const uploadListing = async (req, res) => {
   try {
     const { insertedId: itemId } = await collection.insertOne(data);
 
-    const imagePathWithItemId = `http://res.cloudinary.com/dqrbs7uav/image/upload/v1705071564/uploads/${userId}-${itemId}`;
+    const imagePathWithItemId = `http://res.cloudinary.com/dqrbs7uav/image/upload/uploads/${userId}-${itemId}`;
 
     await collection.findOneAndUpdate(
       {
@@ -111,8 +126,7 @@ const uploadListing = async (req, res) => {
       { $set: { image: imagePathWithItemId } }
     );
 
-    // uploadImage(itemId);
-    uploadImageCloudinary(itemId);
+    uploadImageCloudinary(buffer, itemId, originalname);
 
     res.status(201).json({ msg: "New listing uploaded" });
   } catch (error) {
@@ -136,41 +150,75 @@ const updateListing = async (req, res) => {
 
   async function replaceImageCloudinary(buffer, originalname) {
     try {
-      const prefix = `uploads/${userId}`;
+      const folderPath = path.join(__dirname, "../temp");
 
-      const { resources } = await cloudinary.api.resources({
-        type: "upload",
-        prefix: prefix,
+      const filePath = `${folderPath}/${originalname}`;
+
+      fs.mkdir(folderPath, (err) => {
+        if (err) {
+          return console.log("Error making folder");
+        }
+
+        fs.writeFile(filePath, buffer, (err) => {
+          if (err) {
+            console.log("Err writing a file");
+          }
+        });
       });
 
-      // console.log(resources);
+      const imageFilePath = path.join(__dirname, "../temp", originalname);
 
-      resources.find((item) => {
-        const { public_id } = item;
+      const imageId = `uploads/${userId}-${listingId}`;
 
-        if (public_id.includes(listingId)) {
-          cloudinary.uploader
-            .upload_stream(
-              {
-                public_id: `${userId}-${listingId}`,
-                resource_type: "image",
-                overwrite: true,
-                folder: "uploads",
-                use_filename: true,
-              },
-              (error, result) => {
-                if (error) {
-                  console.error(error);
-                  return res
-                    .status(500)
-                    .json({ msg: "Error uploading image." });
-                }
-                console.log(result);
+      cloudinary.api.resource(imageId, (error, result) => {
+        if (error) {
+          console.error("Error finding existing image:", error);
+        } else {
+          console.log("Existing image details:", result);
+
+          // Upload the new image with the same public ID to overwrite the existing image
+          cloudinary.uploader.upload(
+            imageFilePath,
+            { public_id: imageId, overwrite: true, invalidate: true },
+            (error, result) => {
+              if (error) {
+                console.error("Error uploading new image:", error);
+              } else {
+                console.log("New image uploaded successfully:", result);
+                fs.unlink(filePath, (err) => {
+                  if (err) {
+                    console.log(err, "Error deleteing file");
+                  }
+                  fs.rmdir(folderPath, (err) => {
+                    if (err) {
+                      console.log(err);
+                      console.log("Err deleting temp folder");
+                    }
+                  });
+                });
               }
-            )
-            .end(buffer);
+            }
+          );
         }
       });
+
+      // const result = await cloudinary.uploader.upload(imageFilePath, {
+      //   public_id: imageId,
+      //   resource_type: "image",
+      //   overwrite: true,
+      // });
+
+      // fs.unlink(filePath, (err) => {
+      //   if (err) {
+      //     console.log(err, "Error deleteing file");
+      //   }
+      //   fs.rmdir(folderPath, (err) => {
+      //     if (err) {
+      //       console.log(err);
+      //       console.log("Err deleting temp folder");
+      //     }
+      //   });
+      // });
     } catch (error) {
       console.log(error);
       return res
@@ -227,36 +275,54 @@ const updateListing = async (req, res) => {
 
 const deleteListing = async (req, res) => {
   const { listingId } = req.params;
+  const { userId } = req.user;
 
   try {
     await collection.deleteOne({
       _id: new ObjectId(listingId),
     });
 
-    const folderPath = path.join(__dirname, "../uploads");
+    const imageId = `uploads/${userId}-${listingId}`;
 
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        return console.log(err);
-      }
-
-      files.forEach((fileName) => {
-        if (fileName.startsWith(listingId)) {
-          return deleteImage(fileName);
-        }
-      });
-    });
-
-    function deleteImage(fileName) {
-      const filePath = path.join(__dirname, "../uploads", fileName);
-
-      fs.unlink(filePath, (err) => {
+    cloudinary.uploader.destroy(
+      imageId,
+      {
+        resource_type: "image",
+        invalidate: true,
+      },
+      (err, result) => {
         if (err) {
-          console.log("Error when deleting an image");
-          return res.status(500).json({ msg: "Error when deleting an image" });
+          console.log(err, "Error deleting image");
+        } else {
+          console.log(result, "Result of deleting image");
         }
-      });
-    }
+      }
+    );
+
+    // const folderPath = path.join(__dirname, "../uploads");
+
+    // fs.readdir(folderPath, (err, files) => {
+    //   if (err) {
+    //     return console.log(err);
+    //   }
+
+    //   files.forEach((fileName) => {
+    //     if (fileName.startsWith(listingId)) {
+    //       return deleteImage(fileName);
+    //     }
+    //   });
+    // });
+
+    // function deleteImage(fileName) {
+    //   const filePath = path.join(__dirname, "../uploads", fileName);
+
+    //   fs.unlink(filePath, (err) => {
+    //     if (err) {
+    //       console.log("Error when deleting an image");
+    //       return res.status(500).json({ msg: "Error when deleting an image" });
+    //     }
+    //   });
+    // }
 
     res.status(200).json({ msg: "Listing deleted" });
   } catch (error) {
