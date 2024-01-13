@@ -4,12 +4,10 @@ const bcrypt = require("bcryptjs");
 const users = db.collection("users");
 const items = db.collection("items");
 const fs = require("fs");
-const path = require("path");
 const transporter = require("../sendMail");
+const cloudinary = require("cloudinary").v2;
 
 const getProfile = async (req, res) => {
-  // const { id } = req.params;
-
   const { userId } = req.user;
 
   try {
@@ -105,38 +103,70 @@ const deleteProfile = async (req, res) => {
 
     console.log(deleteUser);
 
-    // CLear cookies of deleted user
+    cloudinary.api.resources(
+      {
+        type: "upload",
+        prefix: `uploads/${userId}`,
+      },
 
-    // Delete images from server
+      (error, result) => {
+        if (error) {
+          console.error("Error fetching resources:", error);
+        } else {
+          if (result.resources.length > 0) {
+            const imagesArray = result.resources.map((resource) => {
+              return resource.public_id;
+            });
 
-    const folderPath = path.join(__dirname, "../uploads");
+            cloudinary.api.delete_resources(
+              imagesArray,
+              { invalidade: true },
+              (error, result) => {
+                if (error) {
+                  console.error("Error deleting images:", error);
+                } else {
+                  console.log("Images deleted successfully:", result);
+                }
+              }
+            );
 
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        return console.log(err);
-      }
-
-      if (files.length > 0) {
-        files.forEach((fileName) => {
-          if (fileName.includes(userId)) {
-            return deleteImage(fileName);
+            console.log("Images Array:", imagesArray);
+          } else {
+            console.log("No resources found with the specified prefix.");
           }
-        });
-      }
-    });
-
-    function deleteImage(fileName) {
-      const filePath = path.join(__dirname, "../uploads", fileName);
-
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          console.log("Error when deleting an image");
-          return res
-            .status(500)
-            .json({ msg: "Error when deleting an image - delete account" });
         }
-      });
-    }
+      }
+    );
+    // CLear cookies of deleted user
+    // Delete images from server
+    // const folderPath = path.join(__dirname, "../uploads");
+
+    // fs.readdir(folderPath, (err, files) => {
+    //   if (err) {
+    //     return console.log(err);
+    //   }
+
+    //   if (files.length > 0) {
+    //     files.forEach((fileName) => {
+    //       if (fileName.includes(userId)) {
+    //         return deleteImage(fileName);
+    //       }
+    //     });
+    //   }
+    // });
+
+    // function deleteImage(fileName) {
+    //   const filePath = path.join(__dirname, "../uploads", fileName);
+
+    //   fs.unlink(filePath, (err) => {
+    //     if (err) {
+    //       console.log("Error when deleting an image");
+    //       return res
+    //         .status(500)
+    //         .json({ msg: "Error when deleting an image - delete account" });
+    //     }
+    //   });
+    // }
 
     res.cookie("authToken", "deleted", { maxAge: 0 });
 

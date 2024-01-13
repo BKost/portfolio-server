@@ -176,7 +176,6 @@ const updateListing = async (req, res) => {
         } else {
           console.log("Existing image details:", result);
 
-          // Upload the new image with the same public ID to overwrite the existing image
           cloudinary.uploader.upload(
             imageFilePath,
             { public_id: imageId, overwrite: true, invalidate: true },
@@ -201,24 +200,6 @@ const updateListing = async (req, res) => {
           );
         }
       });
-
-      // const result = await cloudinary.uploader.upload(imageFilePath, {
-      //   public_id: imageId,
-      //   resource_type: "image",
-      //   overwrite: true,
-      // });
-
-      // fs.unlink(filePath, (err) => {
-      //   if (err) {
-      //     console.log(err, "Error deleteing file");
-      //   }
-      //   fs.rmdir(folderPath, (err) => {
-      //     if (err) {
-      //       console.log(err);
-      //       console.log("Err deleting temp folder");
-      //     }
-      //   });
-      // });
     } catch (error) {
       console.log(error);
       return res
@@ -298,31 +279,6 @@ const deleteListing = async (req, res) => {
         }
       }
     );
-
-    // const folderPath = path.join(__dirname, "../uploads");
-
-    // fs.readdir(folderPath, (err, files) => {
-    //   if (err) {
-    //     return console.log(err);
-    //   }
-
-    //   files.forEach((fileName) => {
-    //     if (fileName.startsWith(listingId)) {
-    //       return deleteImage(fileName);
-    //     }
-    //   });
-    // });
-
-    // function deleteImage(fileName) {
-    //   const filePath = path.join(__dirname, "../uploads", fileName);
-
-    //   fs.unlink(filePath, (err) => {
-    //     if (err) {
-    //       console.log("Error when deleting an image");
-    //       return res.status(500).json({ msg: "Error when deleting an image" });
-    //     }
-    //   });
-    // }
 
     res.status(200).json({ msg: "Listing deleted" });
   } catch (error) {
