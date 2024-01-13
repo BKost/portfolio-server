@@ -3,7 +3,6 @@ const { db } = require("../db/connectDB");
 const bcrypt = require("bcryptjs");
 const users = db.collection("users");
 const items = db.collection("items");
-const fs = require("fs");
 const transporter = require("../sendMail");
 const cloudinary = require("cloudinary").v2;
 
