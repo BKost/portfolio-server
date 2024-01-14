@@ -17,7 +17,7 @@ const { connectToDatabase } = require("./db/connectDB");
 
 // Middleware
 const cookieParser = require("cookie-parser");
-const notFoundMiddleware = require("./middleware/not-found");
+// const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authMiddleware = require("./middleware/auth-middleware");
 

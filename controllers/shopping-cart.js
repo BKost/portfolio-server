@@ -4,11 +4,6 @@ const { db } = require("../db/connectDB");
 const carts = db.collection("shopping-carts");
 
 const addToCart = async (req, res) => {
-  // once clicked on add to cart:
-  // - new cart object will be created in db
-  // - cookie with cart object _id will be sent
-  // -
-
   const { itemData } = req.body;
   const { cartId } = req.cookies;
 

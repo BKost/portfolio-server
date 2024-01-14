@@ -1,7 +1,6 @@
 const stripe = require("stripe")(process.env.STRIPE_CLIENT_SECRET);
 const { ObjectId } = require("mongodb");
 const { db } = require("../db/connectDB");
-const items = db.collection("items");
 const shoppingCarts = db.collection("shopping-carts");
 const transporter = require("../sendMail");
 
@@ -60,7 +59,7 @@ const emailConfirmation = (req, res) => {
     // email is hardcoded for ethereal testing
     to: "brenda.rempel44@ethereal.email",
     subject: `Order confirmation for ${first_name} ${last_name} `,
-    text: `Your order will arrive soon. \n Payment: ${amount}$ \n Delivery address:\n Name: ${first_name} ${last_name} \n Phone number:  ${phone} \n Email: ${email} \n Street: ${address.street_name}, \n City: ${address.city}`,
+    text: `Your order will arrive soon. \n Payment: ${amount}$ \n Delivery address:\n Name: ${first_name} ${last_name} \n Phone number:  ${phone} \n Email: ${email} \n Street: ${address.street_name} ${address.street_number}, \n City: ${address.city}`,
     html: `<p> Your order will arrive soon. \n Payment: ${amount}$ \n Delivery address:\n Name: ${first_name} ${last_name} \n Phone number:  ${phone} \n Email: ${email} \n Street: ${address.street_name}, \n City: ${address.city}</p>`,
   };
 

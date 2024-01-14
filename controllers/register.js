@@ -68,9 +68,7 @@ const register = async (req, res) => {
     const saltRounds = 10;
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    // console.log(hashedPassword);
 
-    // registerUserData.password = hashedPassword;
     data.password = hashedPassword;
 
     const entries = Object.entries(address);

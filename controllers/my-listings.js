@@ -80,7 +80,7 @@ const uploadListing = async (req, res) => {
 
       const imageId = `${userId}-${itemId}`;
 
-      const result = await cloudinary.uploader.upload(imageFilePath, {
+      await cloudinary.uploader.upload(imageFilePath, {
         public_id: imageId,
         folder: "uploads",
         resource_type: "image",

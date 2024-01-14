@@ -4,10 +4,6 @@ const dbClient = new MongoClient(process.env.MONGO_URI);
 
 const db = dbClient.db("FULLSTACK-PROJECT");
 
-// const getDB = (dbName) => {
-//   return dbClient.db(dbName);
-// };
-
 const connectToDatabase = async () => {
   try {
     await dbClient.connect();
@@ -21,5 +17,4 @@ module.exports = {
   dbClient,
   connectToDatabase,
   db,
-  // getDB,
 };
