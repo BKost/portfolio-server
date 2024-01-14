@@ -6,13 +6,9 @@ const shoppingCarts = db.collection("shopping-carts");
 const transporter = require("../sendMail");
 
 const createPaymentIntent = async (req, res) => {
-  // calculate amount
-  // recieve ids from local storage
-  // get their price
-
   const { buyer } = req.body;
   const { cartId } = req.cookies;
-  // console.log(buyer);
+
   if (!buyer) {
     return res.status(400).json({ msg: "Error - no buyer info and address" });
   }
@@ -36,8 +32,6 @@ const createPaymentIntent = async (req, res) => {
         total = total + Number(item.price);
       });
 
-      // console.log(total);
-
       return total;
     }
 
@@ -57,8 +51,6 @@ const createPaymentIntent = async (req, res) => {
 };
 
 const emailConfirmation = (req, res) => {
-  // const { first_name, last_name, email, address, phone } = req.body;
-
   const { buyerInfo, amount } = req.body;
 
   const { first_name, last_name, email, address, phone } = buyerInfo;
@@ -74,7 +66,6 @@ const emailConfirmation = (req, res) => {
 
   transporter.sendMail(message, (err) => {
     if (err) {
-      console.log(err);
       return res.status(500).json({ msg: "Error sending email" });
     }
   });
