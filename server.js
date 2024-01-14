@@ -71,11 +71,12 @@ app.get("/", (req, res) => {
 app.use(express.static(path.join(__dirname, "build")));
 
 // Route NOt Found
-app.use(notFoundMiddleware);
+// app.use(notFoundMiddleware);
 
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "build", "index.html"));
-// });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
 // Custom Error Handler
 app.use(errorHandlerMiddleware);
 
